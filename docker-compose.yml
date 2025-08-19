@@ -18,5 +18,5 @@ services:
     depends_on:
       - redis
     ports:
-      - "8000:8000"
+      - "7777:7777"
     command: ["python", "main.py"]
