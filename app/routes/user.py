@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.session import get_db
-from crud.user import create_user, get_user_by_id, get_user_by_phone
-from schema.user import UserRegisterRequest, UserRegisterResponse, UserResponse
+from crud.user import create_user, get_user_by_id, get_user_by_phone, verify_password
+from schema.user import UserRegisterRequest, UserRegisterResponse, UserResponse, UserLoginRequest, UserLoginResponse
+from utils.jwt import create_access_token
 
 router = APIRouter(prefix="/api/user", tags=["user"])
 
@@ -36,4 +37,36 @@ async def register_user(user_data: UserRegisterRequest, db: Session = Depends(ge
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Registration failed: {str(e)}"
+        )
+
+
+@router.post("/login", response_model=UserLoginResponse)
+async def login_user(login_data: UserLoginRequest, db: Session = Depends(get_db)):
+    user = get_user_by_id(db, login_data.user_id)
+    if not user:
+        return UserLoginResponse(
+            success=False,
+            message="존재하지 않는 아이디입니다."
+        )
+    
+    if not verify_password(login_data.password, user.password_hash):
+        return UserLoginResponse(
+            success=False,
+            message="비밀번호가 틀렸습니다."
+        )
+    
+    try:
+        access_token = create_access_token(data={"sub": user.user_id})
+        
+        return UserLoginResponse(
+            success=True,
+            message="로그인 성공",
+            access_token=access_token,
+            user=UserResponse.from_orm(user)
+        )
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {str(e)}"
         )

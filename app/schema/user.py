@@ -24,3 +24,16 @@ class UserRegisterResponse(BaseModel):
     success: bool
     message: str
     user: Optional[UserResponse] = None
+
+
+class UserLoginRequest(BaseModel):
+    user_id: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6)
+
+
+class UserLoginResponse(BaseModel):
+    success: bool
+    message: str
+    access_token: Optional[str] = None
+    token_type: str = "bearer"
+    user: Optional[UserResponse] = None
