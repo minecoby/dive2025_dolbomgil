@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  redis:
+    image: redis:7
+    container_name: redis_gal
+    restart: always
+    ports:
+      - "6377:6379"
+
+  backend:
+    build:
+      context: ./
+    volumes:
+      - ./app:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - redis
+    ports:
+      - "8000:8000"
+    command: ["python", "main.py"]

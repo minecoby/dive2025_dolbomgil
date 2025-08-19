@@ -1,0 +1,6 @@
+.env
+a.txt
+gal.sql
+/app/utils/__pycache__
+/app/__pycache__
+/app/db/__pycache__

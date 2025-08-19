@@ -1,0 +1,13 @@
+alembic==1.14.1
+fastapi==0.115.8
+fastapi-cli==0.0.7
+fastapi-limiter==0.1.6
+redis==5.0.1
+uvicorn==0.34.0
+SQLAlchemy==2.0.38
+PyJWT==2.10.1
+aiomysql==0.2.0
+mysqlclient==2.2.4
+email-validator==2.1.0
+passlib==1.7.4
+python-multipart==0.0.6
