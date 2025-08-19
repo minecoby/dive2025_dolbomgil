@@ -69,8 +69,10 @@ def update_protector_location(db: Session, user_id: str, location_data: Location
         return new_position
 
 
-def update_caree_location(db: Session, caree_id: int, location_data: LocationUpdateRequest) -> PositionHistory:
-    inside_safe_zone = is_inside_safe_zone(location_data.latitude, location_data.longitude, caree_id, db)
+def update_caree_location(db: Session, caree_id: int, location_data: LocationUpdateRequest) -> tuple[PositionHistory, bool]:
+    """피보호자 위치 업데이트 및 이탈 감지"""
+    current_inside_safe_zone = is_inside_safe_zone(location_data.latitude, location_data.longitude, caree_id, db)
+    geofence_breach = False
     
     existing_position = db.query(PositionHistory).filter(
         PositionHistory.position_type == PositionType.caree,
@@ -78,15 +80,21 @@ def update_caree_location(db: Session, caree_id: int, location_data: LocationUpd
     ).first()
     
     if existing_position:
+        #이탈 감지: 안전구역 내부 -> 외부
+        previous_inside_safe_zone = existing_position.is_inside_safe_zone
+        if previous_inside_safe_zone == True and current_inside_safe_zone == False:
+            geofence_breach = True
+        
+        # 위치 업데이트
         existing_position.latitude = location_data.latitude
         existing_position.longitude = location_data.longitude
         existing_position.accuracy_meters = location_data.accuracy_meters
         existing_position.battery_level = location_data.battery_level
-        existing_position.is_inside_safe_zone = inside_safe_zone
+        existing_position.is_inside_safe_zone = current_inside_safe_zone
         existing_position.recorded_at = db.execute("SELECT NOW()").scalar()
         db.commit()
         db.refresh(existing_position)
-        return existing_position
+        return existing_position, geofence_breach
     else:
         new_position = PositionHistory(
             position_type=PositionType.caree,
@@ -95,12 +103,12 @@ def update_caree_location(db: Session, caree_id: int, location_data: LocationUpd
             longitude=location_data.longitude,
             accuracy_meters=location_data.accuracy_meters,
             battery_level=location_data.battery_level,
-            is_inside_safe_zone=inside_safe_zone
+            is_inside_safe_zone=current_inside_safe_zone
         )
         db.add(new_position)
         db.commit()
         db.refresh(new_position)
-        return new_position
+        return new_position, False
 
 
 def get_latest_protector_location(db: Session, user_id: str) -> Optional[PositionHistory]:

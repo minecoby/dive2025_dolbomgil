@@ -10,6 +10,7 @@ from routes.user import router as user_router
 from routes.caree import router as caree_router
 from routes.location import router as location_router
 from routes.safe_zone import router as safe_zone_router
+from routes.test import router as test_router
 
 
 @asynccontextmanager

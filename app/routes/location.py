@@ -8,6 +8,7 @@ from crud.location import (
     get_latest_caree_location
 )
 from crud.caree import get_carees_by_user
+from crud.alert import create_geofence_breach_alert, create_low_battery_alert
 from schema.location import LocationUpdateRequest, LocationUpdateResponse, LocationResponse, BothLocationResponse
 from utils.auth import get_current_user_id
 from utils.watch_auth import get_caree_from_registration_code
@@ -45,9 +46,15 @@ async def update_caree_location_endpoint(
     caree: Caree = Depends(get_caree_from_registration_code),
     db: Session = Depends(get_db)
 ):
-    """피보호자 위치 업데이트"""
+    """피보호자 위치 업데이트 및 알림 처리"""
     try:
-        updated_location = update_caree_location(db, caree.caree_id, location_data)
+        updated_location, geofence_breach = update_caree_location(db, caree.caree_id, location_data)
+        
+        if geofence_breach:
+            create_geofence_breach_alert(db, caree.caree_id)
+        
+        if location_data.battery_level and location_data.battery_level <= 20:
+            create_low_battery_alert(db, caree.caree_id, location_data.battery_level)
         
         return LocationUpdateResponse(
             success=True,
