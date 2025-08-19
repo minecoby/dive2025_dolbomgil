@@ -25,7 +25,7 @@ class Caree(Base):
     pairing_status = Column(Enum(PairingStatus), default=PairingStatus.pending)
     watch_device_id = Column(String(255), nullable=True)
     watch_device_token = Column(String(255), nullable=True)
-    created_by_user_id = Column(Integer, ForeignKey("User.user_id"), nullable=False)
+    created_by_user_id = Column(String(50), ForeignKey("User.user_id"), nullable=False)
     
     # 관계 설정
     creator = relationship("User", back_populates="carees")

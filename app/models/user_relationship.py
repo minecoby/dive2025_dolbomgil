@@ -14,7 +14,7 @@ class UserRelationship(Base):
     __tablename__ = "UserRelationship"
     
     relationship_id = Column(Integer, primary_key=True, autoincrement=True)
-    protector_user_id = Column(Integer, ForeignKey("User.user_id"), nullable=False)
+    protector_user_id = Column(String(50), ForeignKey("User.user_id"), nullable=False)
     caree_id = Column(Integer, ForeignKey("Caree.caree_id"), nullable=False)
     relationship_type = Column(Enum(RelationshipType), default=RelationshipType.primary)
     can_receive_alerts = Column(Boolean, default=True)
