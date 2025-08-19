@@ -6,6 +6,7 @@ from redis.asyncio import Redis
 from contextlib import asynccontextmanager
 from db.session import engine
 from db.base import Base
+from routes.user import router as user_router
 
 
 @asynccontextmanager
@@ -24,6 +25,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(user_router)
 
 
 if __name__ == "__main__":
