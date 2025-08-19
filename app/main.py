@@ -31,7 +31,9 @@ app.add_middleware(
 
 app.include_router(user_router)
 app.include_router(caree_router)
-
+app.include_router(location_router)
+app.include_router(safe_zone_router)
+app.include_router(navigation_router)
 
 if __name__ == "__main__":
     import uvicorn
