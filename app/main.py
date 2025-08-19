@@ -10,7 +10,7 @@ from routes.user import router as user_router
 from routes.caree import router as caree_router
 from routes.location import router as location_router
 from routes.safe_zone import router as safe_zone_router
-
+from routes.navigation import router as navigation_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,8 +31,6 @@ app.add_middleware(
 
 app.include_router(user_router)
 app.include_router(caree_router)
-app.include_router(location_router)
-app.include_router(safe_zone_router)
 
 
 if __name__ == "__main__":
