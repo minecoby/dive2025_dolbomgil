@@ -15,3 +15,4 @@ class User(Base):
     # 관계 설정
     carees = relationship("Caree", back_populates="creator")
     relationships = relationship("UserRelationship", back_populates="protector")
+    position_histories = relationship("PositionHistory", back_populates="user")
