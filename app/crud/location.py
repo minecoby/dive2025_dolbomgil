@@ -4,6 +4,7 @@ from models.safe_zone import SafeZone
 from schema.location import LocationUpdateRequest
 from typing import Optional
 import math
+from datetime import datetime
 
 
 def is_inside_safe_zone(latitude: float, longitude: float, caree_id: int, db: Session) -> bool:
@@ -50,7 +51,7 @@ def update_protector_location(db: Session, user_id: str, location_data: Location
         existing_position.longitude = location_data.longitude
         existing_position.accuracy_meters = location_data.accuracy_meters
         existing_position.battery_level = location_data.battery_level
-        existing_position.recorded_at = db.execute("SELECT NOW()").scalar()
+        existing_position.recorded_at = datetime.now()
         db.commit()
         db.refresh(existing_position)
         return existing_position
@@ -91,7 +92,7 @@ def update_caree_location(db: Session, caree_id: int, location_data: LocationUpd
         existing_position.accuracy_meters = location_data.accuracy_meters
         existing_position.battery_level = location_data.battery_level
         existing_position.is_inside_safe_zone = current_inside_safe_zone
-        existing_position.recorded_at = db.execute("SELECT NOW()").scalar()
+        existing_position.recorded_at = datetime.now()
         db.commit()
         db.refresh(existing_position)
         return existing_position, geofence_breach

@@ -2,8 +2,12 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from schema.navigation import NavigationRequest, NavigationResponse, NavigationError, PriorityEnum, CarFuelEnum
 from crud.navigation import NavigationService
+from crud.location import get_latest_protector_location, get_latest_caree_location
 from utils.auth import get_current_user
 from models.user import User
+from models.position_history import PositionHistory
+from db.session import get_db
+from sqlalchemy.orm import Session
 from typing import Optional
 
 router = APIRouter(prefix="/navigation", tags=["navigation"])
@@ -64,6 +68,10 @@ async def get_route(
             detail=str(e)
         )
     except Exception as e:
+        print(f"예상치 못한 오류 발생: {str(e)}")  # 디버깅용 로그
+        print(f"오류 타입: {type(e)}")  # 디버깅용 로그
+        import traceback
+        print(f"스택 트레이스: {traceback.format_exc()}")  # 디버깅용 로그
         raise HTTPException(
             status_code=500,
             detail=f"서버 내부 오류: {str(e)}"
@@ -101,6 +109,101 @@ async def get_simple_route(
         raise HTTPException(
             status_code=500,
             detail=f"경로 검색 실패: {str(e)}"
+        )
+
+@router.get("/route/protector-to-caree", response_model=NavigationResponse)
+async def get_protector_to_caree_route(
+    caree_id: int,
+    priority: Optional[PriorityEnum] = PriorityEnum.RECOMMEND,
+    summary: Optional[bool] = True,
+    alternatives: Optional[bool] = False,
+    road_details: Optional[bool] = False,
+    car_fuel: Optional[CarFuelEnum] = CarFuelEnum.GASOLINE,
+    car_hipass: Optional[bool] = False,
+    current_user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    보호자의 현재 위치에서 피보호자의 현재 위치까지의 경로를 검색합니다.
+    
+    - **caree_id**: 피보호자 ID
+    - **priority**: 경로 탐색 우선순위 (RECOMMEND, TIME, DISTANCE)
+    - **summary**: 경로 요약 정보 제공 여부
+    - **alternatives**: 대안 경로 제공 여부
+    - **road_details**: 상세 도로 정보 제공 여부
+    - **car_fuel**: 차량 유종 (GASOLINE, DIESEL, LPG)
+    - **car_hipass**: 하이패스 사용 여부
+    """
+    try:
+        # 보호자와 피보호자의 최신 위치 정보 조회
+        protector_location = get_latest_protector_location(db, current_user.user_id)
+        caree_location = get_latest_caree_location(db, caree_id)
+        
+        print(f"보호자 위치: {protector_location}")  # 디버깅용 로그
+        print(f"피보호자 위치: {caree_location}")    # 디버깅용 로그
+        
+        if not protector_location:
+            raise HTTPException(
+                status_code=404,
+                detail="보호자의 위치 정보를 찾을 수 없습니다."
+            )
+        
+        if not caree_location:
+            raise HTTPException(
+                status_code=404,
+                detail="피보호자의 위치 정보를 찾을 수 없습니다."
+            )
+        
+        navigation_service = NavigationService()
+        
+        # 좌표 형식 변환 (보호자 위치에 각도 정보 포함)
+        print(f"보호자 원본 좌표 - 위도: {protector_location.latitude}, 경도: {protector_location.longitude}")
+        print(f"피보호자 원본 좌표 - 위도: {caree_location.latitude}, 경도: {caree_location.longitude}")
+        
+        origin = navigation_service.format_coordinate(
+            protector_location.latitude, 
+            protector_location.longitude, 
+            None  # 각도 정보가 있다면 추가 가능
+        )
+        destination = navigation_service.format_coordinate(
+            caree_location.latitude, 
+            caree_location.longitude
+        )
+        
+        print(f"변환된 출발지 좌표: {origin}")      # 디버깅용 로그
+        print(f"변환된 목적지 좌표: {destination}") # 디버깅용 로그
+        
+        # NavigationRequest 객체 생성
+        request = NavigationRequest(
+            origin=origin,
+            destination=destination,
+            priority=priority,
+            summary=summary,
+            alternatives=alternatives,
+            road_details=road_details,
+            car_fuel=car_fuel,
+            car_hipass=car_hipass
+        )
+        
+        print(f"NavigationRequest: {request}")  # 디버깅용 로그
+        
+        result = await navigation_service.get_route(request)
+        return result
+        
+    except NavigationError as e:
+        raise HTTPException(
+            status_code=e.error_code,
+            detail=e.error_msg
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"서버 내부 오류: {str(e)}"
         )
 
 
