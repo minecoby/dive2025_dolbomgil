@@ -66,13 +66,16 @@ class Summary(BaseModel):
     waypoints: List[Coordinate]
 
 class NavigationResponse(BaseModel):
-    trans_id: str
-    routes: List[Route]
-    # 실제 API 응답에 맞게 필수 필드 조정
+    trans_id: Optional[str] = None
+    routes: Optional[List[Route]] = None
+    # 카카오 모빌리티 API 실제 응답 필드들
     result_code: Optional[int] = None
     result_msg: Optional[str] = None
     summary: Optional[Summary] = None
     priority: Optional[str] = None
+    # 추가 필드들
+    code: Optional[int] = None
+    message: Optional[str] = None
     
     class Config:
         extra = "allow"  # 추가 필드 허용
