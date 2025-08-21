@@ -5,7 +5,7 @@ import string
 
 
 def generate_registration_code() -> str:
-    return ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+    return ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(6))
 
 
 def create_registration_code(db: Session, caree_id: int) -> str:
