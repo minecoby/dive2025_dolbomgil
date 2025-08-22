@@ -9,6 +9,7 @@ from crud.location import (
 )
 from crud.caree import get_carees_by_user
 from crud.alert import create_geofence_breach_alert, create_low_battery_alert
+from services.fcm_service import FCMService
 from schema.location import LocationUpdateRequest, LocationUpdateResponse, LocationResponse, BothLocationResponse
 from utils.auth import get_current_user_id
 from utils.watch_auth import get_caree_from_registration_code
@@ -50,11 +51,20 @@ async def update_caree_location_endpoint(
     try:
         updated_location, geofence_breach = update_caree_location(db, caree.caree_id, location_data)
         
+        # FCM 서비스 초기화
+        fcm_service = FCMService()
+        
         if geofence_breach:
+            # DB에 알림 기록 생성
             create_geofence_breach_alert(db, caree.caree_id)
+            # FCM 푸시 알림 전송
+            fcm_service.send_geofence_breach_notification(db, caree.caree_id, caree.name)
         
         if location_data.battery_level and location_data.battery_level <= 20:
+            # DB에 알림 기록 생성
             create_low_battery_alert(db, caree.caree_id, location_data.battery_level)
+            # FCM 푸시 알림 전송
+            fcm_service.send_low_battery_notification(db, caree.caree_id, caree.name, location_data.battery_level)
         
         return LocationUpdateResponse(
             success=True,

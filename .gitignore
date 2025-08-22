@@ -9,3 +9,4 @@ gal.sql
 /app/models/__pycache__
 /app/routes/__pycache__
 /app/schema/__pycache__
+serviceAccountKey.json

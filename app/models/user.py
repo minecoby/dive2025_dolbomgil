@@ -16,3 +16,4 @@ class User(Base):
     carees = relationship("Caree", back_populates="creator")
     relationships = relationship("UserRelationship", back_populates="protector")
     position_histories = relationship("PositionHistory", back_populates="user")
+    fcm_tokens = relationship("FCMToken", back_populates="user")

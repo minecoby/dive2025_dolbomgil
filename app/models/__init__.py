@@ -6,6 +6,7 @@ from .safe_zone import SafeZone
 from .care_settings import CareSettings
 from .position_history import PositionHistory
 from .alert_history import AlertHistory
+from .fcm_token import FCMToken
 
 __all__ = [
     "User",
@@ -15,5 +16,6 @@ __all__ = [
     "SafeZone",
     "CareSettings",
     "PositionHistory",
-    "AlertHistory"
+    "AlertHistory",
+    "FCMToken"
 ]
