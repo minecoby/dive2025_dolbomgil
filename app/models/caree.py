@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Enum, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Enum, Date, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 from db.base import Base
 import enum
 
@@ -26,6 +27,8 @@ class Caree(Base):
     watch_device_id = Column(String(255), nullable=True)
     watch_device_token = Column(String(255), nullable=True)
     created_by_user_id = Column(String(50), ForeignKey("User.user_id"), nullable=False)
+    
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # 관계 설정
     creator = relationship("User", back_populates="carees")

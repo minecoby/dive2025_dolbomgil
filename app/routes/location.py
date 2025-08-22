@@ -51,20 +51,30 @@ async def update_caree_location_endpoint(
     try:
         updated_location, geofence_breach = update_caree_location(db, caree.caree_id, location_data)
         
-        # FCM 서비스 초기화
-        fcm_service = FCMService()
-        
-        if geofence_breach:
-            # DB에 알림 기록 생성
-            create_geofence_breach_alert(db, caree.caree_id)
-            # FCM 푸시 알림 전송
-            fcm_service.send_geofence_breach_notification(db, caree.caree_id, caree.name)
-        
-        if location_data.battery_level and location_data.battery_level <= 20:
-            # DB에 알림 기록 생성
-            create_low_battery_alert(db, caree.caree_id, location_data.battery_level)
-            # FCM 푸시 알림 전송
-            fcm_service.send_low_battery_notification(db, caree.caree_id, caree.name, location_data.battery_level)
+        # FCM 서비스 초기화 (파일이 없으면 스킵)
+        try:
+            fcm_service = FCMService()
+            
+            if geofence_breach:
+                # DB에 알림 기록 생성
+                create_geofence_breach_alert(db, caree.caree_id)
+                # FCM 푸시 알림 전송
+                fcm_service.send_geofence_breach_notification(db, caree.caree_id, caree.name)
+            
+            if location_data.battery_level and location_data.battery_level <= 20:
+                # DB에 알림 기록 생성
+                create_low_battery_alert(db, caree.caree_id, location_data.battery_level)
+                # FCM 푸시 알림 전송
+                fcm_service.send_low_battery_notification(db, caree.caree_id, caree.name, location_data.battery_level)
+                
+        except Exception as e:
+            # FCM 서비스 초기화 실패 시 로그만 남기고 계속 진행
+            print(f"FCM 서비스 초기화 실패 (알림 기능 비활성화): {str(e)}")
+            # DB 알림은 정상적으로 생성
+            if geofence_breach:
+                create_geofence_breach_alert(db, caree.caree_id)
+            if location_data.battery_level and location_data.battery_level <= 20:
+                create_low_battery_alert(db, caree.caree_id, location_data.battery_level)
         
         return LocationUpdateResponse(
             success=True,

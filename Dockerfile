@@ -20,9 +20,10 @@ RUN pip install --upgrade pip setuptools wheel
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Firebase 인증 파일 먼저 복사
+COPY serviceAccountKey.json ./
 # 애플리케이션 코드 복사
 COPY app/ ./
-COPY serviceAccountKey.json ./
 
 # Python 경로 설정
 ENV PYTHONPATH=/app
