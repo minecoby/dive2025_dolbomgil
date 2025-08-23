@@ -27,6 +27,8 @@ class UserRegisterResponse(BaseModel):
 class UserLoginRequest(BaseModel):
     user_id: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
+    fcm_token: Optional[str] = None
+    device_type: Optional[str] = None
 
 
 class UserLoginResponse(BaseModel):

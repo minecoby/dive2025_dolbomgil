@@ -86,3 +86,28 @@ def update_device_type(
         db.refresh(token)
         return token
     return None
+
+
+def update_user_fcm_token(
+    db: Session, 
+    user_id: str, 
+    new_fcm_token: str, 
+    device_type: str = None
+) -> FCMToken:
+    """사용자의 기존 FCM 토큰을 새 토큰으로 업데이트"""
+    existing_token = db.query(FCMToken).filter(
+        FCMToken.user_id == user_id,
+        FCMToken.is_active == True
+    ).order_by(FCMToken.updated_at.desc()).first()
+    
+    if existing_token:
+        # 기존 토큰 업데이트
+        existing_token.fcm_token = new_fcm_token
+        existing_token.device_type = device_type
+        existing_token.is_active = True
+        db.commit()
+        db.refresh(existing_token)
+        return existing_token
+    else:
+        # 새 토큰 생성
+        return create_fcm_token(db, user_id, new_fcm_token, device_type)

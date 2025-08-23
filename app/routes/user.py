@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.session import get_db
 from crud.user import create_user, get_user_by_id, get_user_by_phone, verify_password
+from crud.fcm_token import update_user_fcm_token
 from schema.user import UserRegisterRequest, UserRegisterResponse, UserResponse, UserLoginRequest, UserLoginResponse
 from utils.jwt import create_access_token
 
@@ -57,6 +58,14 @@ async def login_user(login_data: UserLoginRequest, db: Session = Depends(get_db)
     
     try:
         access_token = create_access_token(data={"sub": user.user_id})
+        
+        if login_data.fcm_token:
+            update_user_fcm_token(
+                db=db,
+                user_id=user.user_id,
+                new_fcm_token=login_data.fcm_token,
+                device_type=login_data.device_type
+            )
         
         return UserLoginResponse(
             success=True,
