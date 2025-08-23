@@ -7,6 +7,10 @@ class PriorityEnum(str, Enum):
     TIME = "TIME"
     DISTANCE = "DISTANCE"
 
+class WalkingPriorityEnum(str, Enum):
+    DISTANCE = "DISTANCE"
+    MAIN_STREET = "MAIN_STREET"
+
 class CarFuelEnum(str, Enum):
     GASOLINE = "GASOLINE"
     DIESEL = "DIESEL"
@@ -23,6 +27,14 @@ class NavigationRequest(BaseModel):
     car_fuel: Optional[CarFuelEnum] = Field(default=CarFuelEnum.GASOLINE, description="차량 유종")
     car_hipass: Optional[bool] = Field(default=False, description="하이패스 사용 여부")
 
+class WalkingNavigationRequest(BaseModel):
+    origin: str = Field(..., description="출발지 좌표 (예: 127.111202,37.394912)")
+    destination: str = Field(..., description="목적지 좌표 (예: 127.111202,37.394912)")
+    waypoints: Optional[str] = Field(default=None, description="경유지 좌표 (예: 127.17354989857544,37.36629687436494)")
+    priority: Optional[WalkingPriorityEnum] = Field(default=WalkingPriorityEnum.DISTANCE, description="경로 탐색 우선순위")
+    summary: Optional[bool] = Field(default=False, description="경로 요약 정보 제공 여부")
+    default_speed: Optional[float] = Field(default=0, description="도보 속도 (km/h, 기본값: 4km/h)")
+
 class Coordinate(BaseModel):
     name: str
     x: float
@@ -38,9 +50,19 @@ class Fare(BaseModel):
     taxi: int
     toll: int
 
+class Road(BaseModel):
+    name: str
+    distance: int
+    duration: int
+    traffic_speed: Optional[float] = None
+    traffic_state: Optional[int] = None
+    vertexes: Optional[List[float]] = None
+
 class Section(BaseModel):
     distance: int
     duration: int
+    bound: Optional[Bound] = None
+    roads: Optional[List[Road]] = None
 
 class Guide(BaseModel):
     name: str
@@ -52,18 +74,26 @@ class Guide(BaseModel):
     guidance: str
     road_index: int
 
+class Summary(BaseModel):
+    origin: Coordinate
+    destination: Coordinate
+    waypoints: List[Coordinate]
+    priority: Optional[str] = None
+    bound: Optional[Bound] = None
+    fare: Optional[Fare] = None
+    distance: Optional[int] = None
+    duration: Optional[int] = None
+
 class Route(BaseModel):
+    result_code: Optional[int] = None
+    result_msg: Optional[str] = None
+    summary: Optional[Summary] = None
     bound: Optional[Bound] = None
     fare: Optional[Fare] = None
     distance: Optional[int] = None
     duration: Optional[int] = None
     sections: Optional[List[Section]] = None
     guides: Optional[List[Guide]] = None
-
-class Summary(BaseModel):
-    origin: Coordinate
-    destination: Coordinate
-    waypoints: List[Coordinate]
 
 class NavigationResponse(BaseModel):
     trans_id: Optional[str] = None
