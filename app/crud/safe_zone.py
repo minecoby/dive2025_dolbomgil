@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from models.safe_zone import SafeZone
 from models.caree import Caree
-from schema.safe_zone import SafeZoneCreateRequest, SafeZoneUpdateRequest
+from schema.safe_zone import SafeZoneLocationRequest, SafeZoneRadiusRequest
 from typing import Optional
 
 
@@ -10,36 +10,56 @@ def get_caree_by_user(db: Session, user_id: str) -> Optional[Caree]:
     return db.query(Caree).filter(Caree.created_by_user_id == user_id).first()
 
 
-def create_safe_zone(db: Session, user_id: str, safe_zone_data: SafeZoneCreateRequest) -> Optional[SafeZone]:
-    """안전구역 생성 및 업데이트"""
+def get_or_create_safe_zone(db: Session, user_id: str) -> Optional[SafeZone]:
+    """안전구역 조회 또는 생성 (없는 경우 기본값으로 생성)"""
     caree = get_caree_by_user(db, user_id)
     if not caree:
         return None
     
-    existing_zone = db.query(SafeZone).filter(SafeZone.caree_id == caree.caree_id).first()
+    safe_zone = db.query(SafeZone).filter(SafeZone.caree_id == caree.caree_id).first()
     
-    if existing_zone:
-        existing_zone.zone_name = safe_zone_data.zone_name
-        existing_zone.center_latitude = safe_zone_data.center_latitude
-        existing_zone.center_longitude = safe_zone_data.center_longitude
-        existing_zone.radius_meters = safe_zone_data.radius_meters
-        existing_zone.is_active = True
-        db.commit()
-        db.refresh(existing_zone)
-        return existing_zone
-    else:
-        new_zone = SafeZone(
+    if not safe_zone:
+        # 안전구역이 없는 경우 기본값으로 생성
+        safe_zone = SafeZone(
             caree_id=caree.caree_id,
-            zone_name=safe_zone_data.zone_name,
-            center_latitude=safe_zone_data.center_latitude,
-            center_longitude=safe_zone_data.center_longitude,
-            radius_meters=safe_zone_data.radius_meters,
+            zone_name="Home",
+            center_latitude=37.5665,  # 서울시청 기본값
+            center_longitude=126.9780,
+            radius_meters=100,  # 기본 반경 100m
             is_active=True
         )
-        db.add(new_zone)
+        db.add(safe_zone)
         db.commit()
-        db.refresh(new_zone)
-        return new_zone
+        db.refresh(safe_zone)
+    
+    return safe_zone
+
+
+def update_safe_zone_location(db: Session, user_id: str, location_data: SafeZoneLocationRequest) -> Optional[SafeZone]:
+    """안전구역 위치 업데이트"""
+    safe_zone = get_or_create_safe_zone(db, user_id)
+    if not safe_zone:
+        return None
+    
+    safe_zone.center_latitude = location_data.center_latitude
+    safe_zone.center_longitude = location_data.center_longitude
+    
+    db.commit()
+    db.refresh(safe_zone)
+    return safe_zone
+
+
+def update_safe_zone_radius(db: Session, user_id: str, radius_data: SafeZoneRadiusRequest) -> Optional[SafeZone]:
+    """안전구역 반경 업데이트"""
+    safe_zone = get_or_create_safe_zone(db, user_id)
+    if not safe_zone:
+        return None
+    
+    safe_zone.radius_meters = radius_data.radius_meters
+    
+    db.commit()
+    db.refresh(safe_zone)
+    return safe_zone
 
 
 def get_safe_zone_by_user(db: Session, user_id: str) -> Optional[SafeZone]:
@@ -49,28 +69,6 @@ def get_safe_zone_by_user(db: Session, user_id: str) -> Optional[SafeZone]:
         return None
     
     return db.query(SafeZone).filter(SafeZone.caree_id == caree.caree_id).first()
-
-
-def update_safe_zone(db: Session, user_id: str, safe_zone_data: SafeZoneUpdateRequest) -> Optional[SafeZone]:
-    """안전구역 업데이트"""
-    safe_zone = get_safe_zone_by_user(db, user_id)
-    if not safe_zone:
-        return None
-    
-    if safe_zone_data.zone_name is not None:
-        safe_zone.zone_name = safe_zone_data.zone_name
-    if safe_zone_data.center_latitude is not None:
-        safe_zone.center_latitude = safe_zone_data.center_latitude
-    if safe_zone_data.center_longitude is not None:
-        safe_zone.center_longitude = safe_zone_data.center_longitude
-    if safe_zone_data.radius_meters is not None:
-        safe_zone.radius_meters = safe_zone_data.radius_meters
-    if safe_zone_data.is_active is not None:
-        safe_zone.is_active = safe_zone_data.is_active
-    
-    db.commit()
-    db.refresh(safe_zone)
-    return safe_zone
 
 
 def delete_safe_zone(db: Session, user_id: str) -> bool:
