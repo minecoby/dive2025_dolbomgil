@@ -13,6 +13,7 @@ from routes.safe_zone import router as safe_zone_router
 from routes.navigation import router as navigation_router
 from routes.pairing import router as pairing_router
 from routes.fcm_token import router as fcm_token_router
+from routes.home import router as home_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +39,7 @@ app.include_router(safe_zone_router)
 app.include_router(navigation_router)
 app.include_router(pairing_router)
 app.include_router(fcm_token_router)
+app.include_router(home_router)
 
 if __name__ == "__main__":
     import uvicorn
