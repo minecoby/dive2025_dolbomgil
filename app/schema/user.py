@@ -42,3 +42,7 @@ class UserLoginResponse(BaseModel):
 class UserLogoutResponse(BaseModel):
     success: bool
     message: str
+
+
+class CareeRegistrationStatusResponse(BaseModel):
+    has_registered_caree: bool

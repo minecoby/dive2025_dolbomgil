@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.session import get_db
-from crud.user import create_user, get_user_by_id, get_user_by_phone, verify_password
+from crud.user import create_user, get_user_by_id, get_user_by_phone, verify_password, has_registered_caree
 from crud.fcm_token import update_user_fcm_token, delete_all_user_fcm_tokens
-from schema.user import UserRegisterRequest, UserRegisterResponse, UserResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse
+from schema.user import UserRegisterRequest, UserRegisterResponse, UserResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse, CareeRegistrationStatusResponse
 from utils.jwt import create_access_token
 from utils.auth import get_current_user_id
 
@@ -99,4 +99,20 @@ async def logout_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Logout failed: {str(e)}"
+        )
+
+
+@router.get("/caree-status", response_model=CareeRegistrationStatusResponse)
+async def check_caree_registration_status(
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    try:
+        has_caree = has_registered_caree(db, current_user_id)
+        return CareeRegistrationStatusResponse(has_registered_caree=has_caree)
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to check caree registration status: {str(e)}"
         )
