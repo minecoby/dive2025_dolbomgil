@@ -2,17 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.session import get_db
 from crud.safe_zone import (
-    create_safe_zone,
     get_safe_zone_by_user,
-    update_safe_zone,
+    update_safe_zone_location,
+    update_safe_zone_radius,
     delete_safe_zone,
     toggle_safe_zone_active
 )
 from schema.safe_zone import (
-    SafeZoneCreateRequest,
-    SafeZoneUpdateRequest,
+    SafeZoneLocationRequest,
+    SafeZoneRadiusRequest,
     SafeZoneResponse,
-    SafeZoneCreateResponse,
     SafeZoneUpdateResponse,
     SafeZoneDeleteResponse
 )
@@ -21,32 +20,61 @@ from utils.auth import get_current_user_id
 router = APIRouter(prefix="/api/safezone", tags=["safezone"])
 
 
-@router.post("/create", response_model=SafeZoneCreateResponse)
-async def create_safe_zone_endpoint(
-    safe_zone_data: SafeZoneCreateRequest,
+@router.put("/location", response_model=SafeZoneUpdateResponse)
+async def update_safe_zone_location_endpoint(
+    location_data: SafeZoneLocationRequest,
     current_user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    """안전구역 생성/업데이트"""
+    """안전구역 위치 설정"""
     try:
-        safe_zone = create_safe_zone(db, current_user_id, safe_zone_data)
+        safe_zone = update_safe_zone_location(db, current_user_id, location_data)
         
         if not safe_zone:
-            return SafeZoneCreateResponse(
+            return SafeZoneUpdateResponse(
                 success=False,
                 message="등록된 피보호자가 없습니다."
             )
         
-        return SafeZoneCreateResponse(
+        return SafeZoneUpdateResponse(
             success=True,
-            message="안전구역이 설정되었습니다.",
+            message="안전구역 위치가 설정되었습니다.",
             safe_zone=SafeZoneResponse.from_orm(safe_zone)
         )
     
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"안전구역 설정 실패: {str(e)}"
+            detail=f"안전구역 위치 설정 실패: {str(e)}"
+        )
+
+
+@router.put("/radius", response_model=SafeZoneUpdateResponse)
+async def update_safe_zone_radius_endpoint(
+    radius_data: SafeZoneRadiusRequest,
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """안전구역 반경 설정"""
+    try:
+        safe_zone = update_safe_zone_radius(db, current_user_id, radius_data)
+        
+        if not safe_zone:
+            return SafeZoneUpdateResponse(
+                success=False,
+                message="등록된 피보호자가 없습니다."
+            )
+        
+        return SafeZoneUpdateResponse(
+            success=True,
+            message="안전구역 반경이 설정되었습니다.",
+            safe_zone=SafeZoneResponse.from_orm(safe_zone)
+        )
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"안전구역 반경 설정 실패: {str(e)}"
         )
 
 
@@ -73,35 +101,6 @@ async def get_safe_zone_info(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"안전구역 조회 실패: {str(e)}"
-        )
-
-
-@router.put("/update", response_model=SafeZoneUpdateResponse)
-async def update_safe_zone_endpoint(
-    safe_zone_data: SafeZoneUpdateRequest,
-    current_user_id: str = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
-):
-    """안전구역 부분 업데이트"""
-    try:
-        safe_zone = update_safe_zone(db, current_user_id, safe_zone_data)
-        
-        if not safe_zone:
-            return SafeZoneUpdateResponse(
-                success=False,
-                message="설정된 안전구역이 없습니다."
-            )
-        
-        return SafeZoneUpdateResponse(
-            success=True,
-            message="안전구역이 업데이트되었습니다.",
-            safe_zone=SafeZoneResponse.from_orm(safe_zone)
-        )
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"안전구역 업데이트 실패: {str(e)}"
         )
 
 
@@ -144,12 +143,12 @@ async def delete_safe_zone_endpoint(
         success = delete_safe_zone(db, current_user_id)
         
         if success:
-            return SafeZoneDeleteResponse(
+            return SafeZoneUpdateResponse(
                 success=True,
                 message="안전구역이 삭제되었습니다."
             )
         else:
-            return SafeZoneDeleteResponse(
+            return SafeZoneUpdateResponse(
                 success=False,
                 message="삭제할 안전구역이 없습니다."
             )
