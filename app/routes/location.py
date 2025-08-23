@@ -14,6 +14,7 @@ from schema.location import LocationUpdateRequest, LocationUpdateResponse, Locat
 from utils.auth import get_current_user_id
 from utils.watch_auth import get_caree_from_registration_code
 from models.caree import Caree
+from models.safe_zone import SafeZone
 
 router = APIRouter(prefix="/api/location", tags=["location"])
 
@@ -56,10 +57,21 @@ async def update_caree_location_endpoint(
             fcm_service = FCMService()
             
             if geofence_breach:
-                # DB에 알림 기록 생성
-                create_geofence_breach_alert(db, caree.caree_id)
-                # FCM 푸시 알림 전송
-                fcm_service.send_geofence_breach_notification(db, caree.caree_id, caree.name)
+                # 안전구역이 활성화되어 있는지 확인
+                safe_zone = db.query(SafeZone).filter(
+                    SafeZone.caree_id == caree.caree_id,
+                    SafeZone.is_active == True
+                ).first()
+                
+                if safe_zone:
+                    # DB에 알림 기록 생성
+                    create_geofence_breach_alert(db, caree.caree_id)
+                    # FCM 푸시 알림 전송
+                    fcm_service.send_geofence_breach_notification(db, caree.caree_id, caree.name)
+                else:
+                    # 안전구역이 비활성화된 경우 알림 기록만 생성 (푸시 알림은 전송하지 않음)
+                    create_geofence_breach_alert(db, caree.caree_id)
+                    print(f"피보호자 {caree.caree_id}의 안전구역이 비활성화되어 있어 푸시 알림을 전송하지 않습니다.")
             
             if location_data.battery_level and location_data.battery_level <= 20:
                 # DB에 알림 기록 생성

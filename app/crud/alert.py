@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from models.alert_history import AlertHistory, AlertType
 from models.caree import Caree
 from models.user import User
+from models.safe_zone import SafeZone
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -55,6 +56,16 @@ def create_geofence_breach_alert(db: Session, caree_id: int) -> Optional[AlertHi
     # 피보호자 정보 조회
     caree = db.query(Caree).filter(Caree.caree_id == caree_id).first()
     if not caree:
+        return None
+    
+    # 안전구역이 활성화되어 있는지 확인
+    safe_zone = db.query(SafeZone).filter(
+        SafeZone.caree_id == caree_id,
+        SafeZone.is_active == True
+    ).first()
+    
+    if not safe_zone:
+        # 안전구역이 비활성화된 경우 알림을 생성하지 않음
         return None
     
     message = f"{caree.name}님이 안전구역을 벗어났습니다."
