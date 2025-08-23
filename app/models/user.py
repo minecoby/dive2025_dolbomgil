@@ -10,7 +10,6 @@ class User(Base):
     name = Column(String(100), nullable=False)
     phone_number = Column(String(20), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    device_token = Column(String(255), nullable=True)
     
     # 관계 설정
     carees = relationship("Caree", back_populates="creator")

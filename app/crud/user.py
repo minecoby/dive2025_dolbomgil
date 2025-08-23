@@ -28,8 +28,7 @@ def create_user(db: Session, user_data: UserRegisterRequest) -> User:
         user_id=user_data.user_id,
         name=user_data.name,
         phone_number=user_data.phone_number,
-        password_hash=hashed_password,
-        device_token=user_data.device_token
+        password_hash=hashed_password
     )
     db.add(user)
     db.commit()
