@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.session import get_db
 from crud.user import create_user, get_user_by_id, get_user_by_phone, verify_password
-from crud.fcm_token import update_user_fcm_token
-from schema.user import UserRegisterRequest, UserRegisterResponse, UserResponse, UserLoginRequest, UserLoginResponse
+from crud.fcm_token import update_user_fcm_token, delete_all_user_fcm_tokens
+from schema.user import UserRegisterRequest, UserRegisterResponse, UserResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse
 from utils.jwt import create_access_token
+from utils.auth import get_current_user_id
 
 router = APIRouter(prefix="/api/user", tags=["user"])
 
@@ -78,4 +79,24 @@ async def login_user(login_data: UserLoginRequest, db: Session = Depends(get_db)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Login failed: {str(e)}"
+        )
+
+
+@router.post("/logout", response_model=UserLogoutResponse)
+async def logout_user(
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    try:
+        deleted_count = delete_all_user_fcm_tokens(db, current_user_id)
+        
+        return UserLogoutResponse(
+            success=True,
+            message=f"로그아웃 성공"
+        )
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Logout failed: {str(e)}"
         )
