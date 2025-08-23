@@ -133,8 +133,8 @@ class FCMService:
             token_list = [token[0] for token in fcm_tokens]
             
             # 알림 전송
-            title = "안전구역 이탈 알림"
-            body = f"{caree_name}님이 안전구역을 벗어났습니다."
+            title = "🚨안전구역 이탈 알림🚨"
+            body = f"{caree_name}님이 안전구역을 벗어났습니다.⚠️"
             data = {
                 "type": "geofence_breach",
                 "caree_id": str(caree_id),
