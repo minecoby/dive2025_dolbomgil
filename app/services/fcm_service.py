@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from models.fcm_token import FCMToken
 from models.user import User
 from models.caree import Caree
+from models.safe_zone import SafeZone
 from typing import List, Optional
 import logging
 import os
@@ -112,6 +113,16 @@ class FCMService:
             caree = db.query(Caree).filter(Caree.caree_id == caree_id).first()
             if not caree:
                 logger.error(f"피보호자를 찾을 수 없습니다: {caree_id}")
+                return False
+            
+            # 안전구역이 활성화되어 있는지 확인
+            safe_zone = db.query(SafeZone).filter(
+                SafeZone.caree_id == caree_id,
+                SafeZone.is_active == True
+            ).first()
+            
+            if not safe_zone:
+                logger.info(f"피보호자 {caree_id}의 안전구역이 비활성화되어 있어 알림을 전송하지 않습니다.")
                 return False
             
             # 보호자 정보 조회
