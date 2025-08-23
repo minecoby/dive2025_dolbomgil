@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.user import User
+from models.user_relationship import UserRelationship
 from passlib.context import CryptContext
 from schema.user import UserRegisterRequest
 
@@ -34,3 +35,10 @@ def create_user(db: Session, user_data: UserRegisterRequest) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+
+def has_registered_caree(db: Session, user_id: str) -> bool:
+    relationship = db.query(UserRelationship).filter(
+        UserRelationship.protector_user_id == user_id
+    ).first()
+    return relationship is not None

@@ -111,3 +111,17 @@ def update_user_fcm_token(
     else:
         # 새 토큰 생성
         return create_fcm_token(db, user_id, new_fcm_token, device_type)
+
+
+def delete_all_user_fcm_tokens(db: Session, user_id: str) -> int:
+    """사용자의 모든 FCM 토큰 삭제"""
+    tokens = db.query(FCMToken).filter(FCMToken.user_id == user_id).all()
+    
+    count = len(tokens)
+    for token in tokens:
+        db.delete(token)
+    
+    if count > 0:
+        db.commit()
+    
+    return count

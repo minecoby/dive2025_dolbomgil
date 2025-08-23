@@ -37,3 +37,12 @@ class UserLoginResponse(BaseModel):
     access_token: Optional[str] = None
     token_type: str = "bearer"
     user: Optional[UserResponse] = None
+
+
+class UserLogoutResponse(BaseModel):
+    success: bool
+    message: str
+
+
+class CareeRegistrationStatusResponse(BaseModel):
+    has_registered_caree: bool
