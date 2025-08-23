@@ -75,11 +75,11 @@ async def update_caree_location_endpoint(
                 create_geofence_breach_alert(db, caree.caree_id)
             if location_data.battery_level and location_data.battery_level <= 20:
                 create_low_battery_alert(db, caree.caree_id, location_data.battery_level)
-        
         return LocationUpdateResponse(
             success=True,
             message="피보호자 위치가 업데이트되었습니다.",
-            location=LocationResponse.from_orm(updated_location)
+            location=LocationResponse.from_orm(updated_location),
+            care_level=caree.care_level
         )
     
     except Exception as e:

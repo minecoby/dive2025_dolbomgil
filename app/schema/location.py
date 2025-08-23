@@ -27,6 +27,7 @@ class LocationUpdateResponse(BaseModel):
     success: bool
     message: str
     location: Optional[LocationResponse] = None
+    care_level: Optional[int] = None
 
 
 class BothLocationResponse(BaseModel):

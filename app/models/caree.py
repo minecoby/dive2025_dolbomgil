@@ -26,6 +26,7 @@ class Caree(Base):
     pairing_status = Column(Enum(PairingStatus), default=PairingStatus.pending)
     watch_device_id = Column(String(255), nullable=True)
     watch_device_token = Column(String(255), nullable=True)
+    care_level = Column(Integer,default= 1)
     created_by_user_id = Column(String(50), ForeignKey("User.user_id"), nullable=False)
     
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

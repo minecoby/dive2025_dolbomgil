@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.session import get_db
-from crud.caree import create_caree, get_carees_by_user, delete_caree_by_user
+from crud.caree import create_caree, get_carees_by_user, delete_caree_by_user, update_caree
 from crud.registration_code import create_registration_code
-from schema.caree import CareeCreateRequest, CareeCreateResponse, CareeResponse, CareeDeleteResponse
+from schema.caree import CareeCreateRequest, CareeCreateResponse, CareeResponse, CareeDeleteResponse, CareeUpdateRequest
 from utils.auth import get_current_user_id
 
 router = APIRouter(prefix="/api/caree", tags=["caree"])
@@ -88,4 +88,31 @@ async def delete_my_caree(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"피보호자 삭제 실패: {str(e)}"
+        )
+
+
+@router.put("/update/{caree_id}", response_model=CareeResponse)
+async def update_my_caree(
+    caree_id: int,
+    caree_data: CareeUpdateRequest,
+    current_user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    try:
+        updated_caree = update_caree(db, caree_id, caree_data, current_user_id)
+        
+        if not updated_caree:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="수정할 피보호자를 찾을 수 없습니다."
+            )
+        
+        return CareeResponse.from_orm(updated_caree)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"피보호자 정보 수정 실패: {str(e)}"
         )

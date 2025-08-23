@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from models.caree import Caree
 from models.user_relationship import UserRelationship, RelationshipType
-from schema.caree import CareeCreateRequest
+from schema.caree import CareeCreateRequest, CareeUpdateRequest
 
 
 def create_caree(db: Session, caree_data: CareeCreateRequest, creator_user_id: str) -> Caree:
@@ -9,6 +9,7 @@ def create_caree(db: Session, caree_data: CareeCreateRequest, creator_user_id: s
         name=caree_data.name,
         gender=caree_data.gender,
         birth_date=caree_data.birth_date,
+        care_level=caree_data.care_level,
         created_by_user_id=creator_user_id
     )
     db.add(caree)
@@ -55,3 +56,17 @@ def delete_caree_by_user(db: Session, user_id: str) -> bool:
         db.commit()
         return True
     return False
+
+
+def update_caree(db: Session, caree_id: int, caree_data: CareeUpdateRequest, user_id: str) -> Caree:
+    caree = db.query(Caree).filter(Caree.caree_id == caree_id, Caree.created_by_user_id == user_id).first()
+    if not caree:
+        return None
+    
+    update_data = caree_data.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(caree, field, value)
+    
+    db.commit()
+    db.refresh(caree)
+    return caree
