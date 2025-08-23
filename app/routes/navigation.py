@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from schema.navigation import NavigationRequest, NavigationResponse, NavigationError, PriorityEnum, CarFuelEnum
 from crud.navigation import NavigationService
 from crud.location import get_latest_protector_location, get_latest_caree_location
+from crud.caree import get_carees_by_user
 from utils.auth import get_current_user
 from models.user import User
 from models.position_history import PositionHistory
@@ -113,7 +114,6 @@ async def get_simple_route(
 
 @router.get("/route/protector-to-caree", response_model=NavigationResponse)
 async def get_protector_to_caree_route(
-    caree_id: int,
     priority: Optional[PriorityEnum] = PriorityEnum.RECOMMEND,
     summary: Optional[bool] = True,
     alternatives: Optional[bool] = False,
@@ -126,7 +126,6 @@ async def get_protector_to_caree_route(
     """
     보호자의 현재 위치에서 피보호자의 현재 위치까지의 경로를 검색합니다.
     
-    - **caree_id**: 피보호자 ID
     - **priority**: 경로 탐색 우선순위 (RECOMMEND, TIME, DISTANCE)
     - **summary**: 경로 요약 정보 제공 여부
     - **alternatives**: 대안 경로 제공 여부
@@ -135,6 +134,16 @@ async def get_protector_to_caree_route(
     - **car_hipass**: 하이패스 사용 여부
     """
     try:
+        # 현재 보호자의 피보호자 조회
+        carees = get_carees_by_user(db, current_user.user_id)
+        if not carees:
+            raise HTTPException(
+                status_code=404,
+                detail="등록된 피보호자가 없습니다."
+            )
+        
+        caree_id = carees[0].caree_id
+        
         # 보호자와 피보호자의 최신 위치 정보 조회
         protector_location = get_latest_protector_location(db, current_user.user_id)
         caree_location = get_latest_caree_location(db, caree_id)
