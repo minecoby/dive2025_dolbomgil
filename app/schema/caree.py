@@ -28,6 +28,7 @@ class CareeResponse(BaseModel):
     watch_device_token: Optional[str]
     care_level: int
     created_by_user_id: str
+    registration_code: str
 
     class Config:
         from_attributes = True

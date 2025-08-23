@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from db.session import get_db
 from crud.caree import create_caree, get_carees_by_user, delete_caree_by_user, update_caree
-from crud.registration_code import create_registration_code
+from crud.registration_code import create_registration_code, get_registration_code_by_caree_id
 from schema.caree import CareeCreateRequest, CareeCreateResponse, CareeResponse, CareeDeleteResponse, CareeUpdateRequest
 from utils.auth import get_current_user_id
 
@@ -54,7 +54,14 @@ async def get_my_caree(
                 detail="등록된 피보호자가 없습니다."
             )
         
-        return CareeResponse.from_orm(carees[0])
+        caree = carees[0]
+        registration_code_record = get_registration_code_by_caree_id(db, caree.caree_id)
+        registration_code = registration_code_record.registration_code if registration_code_record else ""
+        
+        caree_dict = caree.__dict__.copy()
+        caree_dict['registration_code'] = registration_code
+        
+        return CareeResponse(**caree_dict)
     
     except HTTPException:
         raise
@@ -107,7 +114,13 @@ async def update_my_caree(
                 detail="수정할 피보호자를 찾을 수 없습니다."
             )
         
-        return CareeResponse.from_orm(updated_caree)
+        registration_code_record = get_registration_code_by_caree_id(db, updated_caree.caree_id)
+        registration_code = registration_code_record.registration_code if registration_code_record else ""
+        
+        caree_dict = updated_caree.__dict__.copy()
+        caree_dict['registration_code'] = registration_code
+        
+        return CareeResponse(**caree_dict)
     
     except HTTPException:
         raise
